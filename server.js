@@ -23,12 +23,12 @@ async function connectDB() {
     console.log('Successfully connected to MongoDB.');
   } catch (err) {
     console.warn('MongoDB connection failed:', err.message);
+    if (process.env.VERCEL) {
+       console.error('Cannot run in-memory MongoDB on Vercel. Please configure MONGODB_URI.');
+       return;
+    }
     console.log('Attempting to spin up an in-memory MongoDB server as fallback...');
     try {
-      if (process.env.VERCEL) {
-        console.warn('MongoDB Memory Server is not supported on Vercel. Please set MONGODB_URI in Vercel environment variables.');
-        return;
-      }
       const { MongoMemoryServer } = require('mongodb-memory-server');
       const mongoServer = await MongoMemoryServer.create();
       const mongoUri = mongoServer.getUri();
@@ -37,6 +37,7 @@ async function connectDB() {
       console.log('Successfully connected to in-memory MongoDB.');
     } catch (fallbackErr) {
       console.error('Failed to start in-memory MongoDB server:', fallbackErr);
+      process.exit(1);
     }
   }
 }
@@ -57,7 +58,7 @@ app.get('/play', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Serverless export for Vercel
+// Port configuration
 if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
   const PORT = process.env.PORT || 3000;
   app.listen(PORT, () => {
