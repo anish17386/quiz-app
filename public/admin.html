@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiz App - Admin Portal</title>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Tailwind CSS v3 CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- QRCode.js Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            slido: {
+              50: '#f0f7ff',
+              100: '#e0efff',
+              200: '#b8dcff',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af',
+              900: '#1e3a8a',
+            },
+            brandGreen: '#10b981',
+            brandRed: '#ef4444',
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f0fdf4;
+      min-height: 100vh;
+    }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(22, 163, 74, 0.3);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+    }
+  </style>
+</head>
+<body class="text-green-900 antialiased flex flex-col justify-between min-h-screen overflow-y-scroll">
+
+  <!-- Header -->
+  <header class="w-full py-4 px-6 md:px-12 flex justify-between items-center border-b border-green-200 glass-card sticky top-0 z-50">
+    <div class="flex items-center gap-2 cursor-pointer" onclick="window.location.href='/'">
+      <div class="h-10 w-10 bg-gradient-to-tr from-white to-green-50 rounded-xl flex items-center justify-center shadow-lg shadow-slido-500/20">
+        <i class="fa-solid fa-square-poll-vertical text-xl text-green-900"></i>
+      </div>
+      <span class="text-2xl font-extrabold tracking-tight text-green-900">quiz<span class="text-slido-500 font-medium">app</span></span>
+      <span class="ml-2 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slido-200 bg-slido-900/60 border border-slido-700/30 rounded-lg">Admin</span>
+    </div>
+
+    <!-- Logged in user info -->
+    <div id="header-user-info" class="hidden flex items-center gap-4">
+      <div class="hidden md:flex flex-col text-right">
+        <span class="text-sm font-semibold text-green-900" id="header-username">Admin User</span>
+        <span class="text-[10px] text-green-600 font-mono" id="header-org">My Organization</span>
+      </div>
+      <button onclick="handleLogout()" class="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl text-red-400 hover:text-red-300 hover:bg-red-950/20 transition duration-200 border border-red-900/30">
+        <i class="fa-solid fa-right-from-bracket"></i>
+        <span class="hidden sm:inline">Logout</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="flex-grow px-4 md:px-12 py-10 max-w-7xl mx-auto w-full">
+
+    <!-- ================== AUTH CARD (LOGIN/REGISTER) ================== -->
+    <div id="auth-view" class="max-w-md mx-auto my-12 glass-card rounded-3xl p-8 shadow-2xl">
+      <!-- Tabs header -->
+      <div class="flex border-b border-green-200 mb-6">
+        <button id="auth-tab-login" onclick="toggleAuthTab('login')" class="flex-1 pb-3 text-base font-bold border-b-2 border-slido-500 text-slido-200 transition">
+          Login
+        </button>
+        <button id="auth-tab-register" onclick="toggleAuthTab('register')" class="flex-1 pb-3 text-base font-bold border-b-2 border-transparent text-green-600 hover:text-green-900 transition">
+          Register
+        </button>
+      </div>
+
+      <!-- Auth error alert -->
+      <div id="auth-error" class="hidden mb-6 p-4 bg-red-950/40 border border-red-800/50 text-red-300 rounded-2xl flex items-start gap-3">
+        <i class="fa-solid fa-circle-exclamation mt-0.5"></i>
+        <span class="text-sm" id="auth-error-msg">Incorrect credentials.</span>
+      </div>
+
+      <!-- LOGIN FORM -->
+      <form id="login-form" onsubmit="handleLoginSubmit(event)">
+        <div class="space-y-4">
+          <div>
+            <label class="block text-green-600 text-xs font-bold uppercase tracking-wider mb-2">Email Address</label>
+            <input 
+              type="email" 
+              id="login-email" 
+              placeholder="admin@organization.com"
+              class="w-full px-5 py-3 bg-white/70 border border-green-200 rounded-2xl text-green-900 focus:outline-none focus:ring-2 focus:ring-slido-500 focus:border-transparent transition placeholder-slate-600 text-sm"
+              required
+            >
+          </div>
+          <div>
+            <label class="block text-green-600 text-xs font-bold uppercase tracking-wider mb-2">Password</label>
+            <input 
+              type="password" 
+              id="login-password" 
+              placeholder="••••••••"
+              class="w-full px-5 py-3 bg-white/70 border border-green-200 rounded-2xl text-green-900 focus:outline-none focus:ring-2 focus:ring-slido-500 focus:border-transparent transition placeholder-slate-600 text-sm"
+              required
+            >
+          </div>
+          <button 
+            type="submit" 
+            class="w-full mt-6 py-4 bg-gradient-to-r from-slido-600 to-indigo-600 hover:from-slido-500 hover:to-indigo-500 text-green-900 font-bold rounded-2xl transition duration-200 shadow-lg shadow-slido-600/30 flex items-center justify-center gap-2"
+          >
+            <span>Log In</span>
+            <i class="fa-solid fa-right-to-bracket text-sm"></i>
+          </button>
+        </div>
+      </form>
+
+      <!-- REGISTER FORM -->
+      <form id="register-form" class="hidden" onsubmit="handleRegisterSubmit(event)">
+        <div class="space-y-4">
+          <div>
+            <label class="block text-green-600 text-xs font-bold uppercase tracking-wider mb-2">Username</label>
+            <input 
+              type="text" 
+              id="register-username" 
+              placeholder="alex_creator"
+              class="w-full px-5 py-3 bg-white/70 border border-green-200 rounded-2xl text-green-900 focus:outline-none focus:ring-2 focus:ring-slido-500 focus:border-transparent transition placeholder-slate-600 text-sm"
+              required
+            >
+          </div>
+          <div>
+            <label class="block text-green-600 text-xs font-bold uppercase tracking-wider mb-2">Email Address</label>
+            <input 
+              type="email" 
+              id="register-email" 
+              placeholder="alex@example.com"
+              class="w-full px-5 py-3 bg-white/70 border border-green-200 rounded-2xl text-green-900 focus:outline-none focus:ring-2 focus:ring-slido-500 focus:border-transparent transition placeholder-slate-600 text-sm"
+              required
+            >
+          </div>
+          <div>
+            <label class="block text-green-600 text-xs font-bold uppercase tracking-wider mb-2">Organization Name</label>
+            <input 
+              type="text" 
+              id="register-org" 
+              placeholder="Acme Corporation"
+              class="w-full px-5 py-3 bg-white/70 border border-green-200 rounded-2xl text-green-900 focus:outline-none focus:ring-2 focus:ring-slido-500 focus:border-transparent transition placeholder-slate-600 text-sm"
+              required
+            >
+          </div>
+          <div>
+            <label class="block text-green-600 text-xs font-bold uppercase tracking-wider mb-2">Password</label>
+            <input 
+              type="password" 
+              id="register-password" 
+              placeholder="••••••••"
+              class="w-full px-5 py-3 bg-white/70 border border-green-200 rounded-2xl text-green-900 focus:outline-none focus:ring-2 focus:ring-slido-500 focus:border-transparent transition placeholder-slate-600 text-sm"
+              required
+            >
+          </div>
+          <button 
+            type="submit" 
+            class="w-full mt-6 py-4 bg-gradient-to-r from-slido-600 to-indigo-600 hover:from-slido-500 hover:to-indigo-500 text-green-900 font-bold rounded-2xl transition duration-200 shadow-lg shadow-slido-600/30 flex items-center justify-center gap-2"
+          >
+            <span>Create Account</span>
+            <i class="fa-solid fa-user-plus text-sm"></i>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- ================== DASHBOARD VIEW ================== -->
+    <div id="dashboard-view" class="hidden space-y-8">
+      
+      <!-- Top banner / CTA -->
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 p-8 glass-card rounded-3xl shadow-xl">
+        <div>
+          <h2 class="text-3xl font-extrabold text-green-900 tracking-tight">Your Quiz Dashboard</h2>
+          <p class="text-green-600 text-sm mt-1">Manage your active polls, create new quizzes, and review performance analytics.</p>
+        </div>
+        <button 
+          onclick="openQuizCreator()" 
+          class="px-6 py-3.5 bg-gradient-to-r from-white to-green-50 hover:from-slido-600 hover:to-indigo-700 text-green-900 font-bold rounded-2xl transition duration-200 flex items-center justify-center gap-2 shadow-lg shadow-slido-600/20"
+        >
+          <i class="fa-solid fa-plus text-sm"></i>
+          <span>Create New Quiz</span>
+        </button>
+      </div>
+
+      <!-- Dashboard Columns (Active & Past) -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        
+        <!-- ACTIVE QUIZZES COLUMN -->
+        <div class="space-y-4">
+          <div class="flex items-center gap-3 border-b border-green-200 pb-3">
+            <span class="flex h-3 w-3 relative">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+            </span>
+            <h3 class="text-xl font-bold text-green-900">Active Quizzes</h3>
+            <span id="active-count" class="ml-auto text-xs px-2.5 py-0.5 font-bold text-green-600 bg-green-100/40 rounded-full border border-green-200">0</span>
+          </div>
+
+          <div id="active-quizzes-list" class="space-y-4">
+            <!-- Dynamic Active Quizzes -->
+            <div class="text-center py-12 glass-card rounded-2xl text-green-600 text-sm">
+              No active quizzes. Click "Create New Quiz" to start.
+            </div>
+          </div>
+        </div>
+
+        <!-- PAST QUIZZES COLUMN -->
+        <div class="space-y-4">
+          <div class="flex items-center gap-3 border-b border-green-200 pb-3">
+            <span class="flex h-3 w-3 rounded-full bg-slate-500"></span>
+            <h3 class="text-xl font-bold text-green-900">Past / Archived</h3>
+            <span id="past-count" class="ml-auto text-xs px-2.5 py-0.5 font-bold text-green-600 bg-green-50/40 rounded-full border border-green-200/30">0</span>
+          </div>
+
+          <div id="past-quizzes-list" class="space-y-4">
+            <!-- Dynamic Past Quizzes -->
+            <div class="text-center py-12 glass-card rounded-2xl text-green-600 text-sm">
+              No archived quizzes.
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ================== QUIZ CREATOR FORM VIEW ================== -->
+    <div id="creator-view" class="hidden glass-card rounded-3xl p-8 shadow-2xl max-w-3xl mx-auto space-y-6">
+      
+      <!-- Header -->
+      <div class="flex items-center justify-between border-b border-green-200 pb-4">
+        <div class="flex items-center gap-3">
+          <button onclick="closeQuizCreator()" class="h-10 w-10 bg-green-50 hover:bg-green-100 text-green-700 hover:text-green-900 rounded-xl flex items-center justify-center transition border border-green-200/50">
+            <i class="fa-solid fa-chevron-left text-sm"></i>
+          </button>
+          <div>
+            <h2 class="text-2xl font-extrabold text-green-900">Create a New Quiz</h2>
+            <p class="text-green-600 text-xs mt-0.5">Design questions and select correct choices.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quiz Form -->
+      <form id="creator-form" onsubmit="handleCreateQuizSubmit(event)" class="space-y-6">
+        <div>
+          <label class="block text-green-700 text-xs font-bold uppercase tracking-wider mb-2">Quiz Title</label>
+          <input 
+            type="text" 
+            id="quiz-title" 
+            placeholder="e.g., Weekly General Knowledge Challenge" 
+            class="w-full px-5 py-3.5 bg-white/70 border border-green-200 rounded-2xl text-green-900 focus:outline-none focus:ring-2 focus:ring-slido-500 focus:border-transparent transition font-semibold placeholder-slate-600 text-sm"
+            required
+          >
+        </div>
+
+        <div class="border-t border-green-200 pt-6">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-bold text-green-900">Questions</h3>
+            <button 
+              type="button" 
+              onclick="addQuestionField()"
+              class="px-4 py-2 bg-white hover:bg-slate-50 text-slido-600 border border-green-200 rounded-xl transition duration-200 text-xs font-semibold flex items-center gap-1.5 shadow-sm"
+            >
+              <i class="fa-solid fa-plus-circle text-xs"></i>
+              <span>Add Question</span>
+            </button>
+          </div>
+
+          <!-- Question container -->
+          <div id="questions-container" class="space-y-6">
+            <!-- Dynamic question block will go here -->
+          </div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="flex justify-end gap-3 border-t border-green-200 pt-6">
+          <button 
+            type="button" 
+            onclick="closeQuizCreator()" 
+            class="px-6 py-3.5 bg-green-50 hover:bg-green-100 text-green-700 font-semibold rounded-2xl transition duration-200 border border-green-200"
+          >
+            Cancel
+          </button>
+          <button 
+            type="submit" 
+            class="px-6 py-3.5 bg-gradient-to-r from-slido-600 to-indigo-600 hover:from-slido-50 hover:to-indigo-50 text-green-900 font-bold rounded-2xl transition duration-200 shadow-lg shadow-slido-600/30 flex items-center justify-center gap-2"
+          >
+            <i class="fa-solid fa-save text-sm"></i>
+            <span>Publish Quiz</span>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- ================== STATS / ANALYTICS VIEW ================== -->
+    <div id="stats-view" class="hidden space-y-8 max-w-4xl mx-auto">
+      
+      <!-- Header -->
+      <div class="flex items-center gap-3">
+        <button onclick="closeStatsView()" class="h-10 w-10 bg-green-50 hover:bg-green-100 text-green-700 hover:text-green-900 rounded-xl flex items-center justify-center transition border border-green-200/50">
+          <i class="fa-solid fa-chevron-left text-sm"></i>
+        </button>
+        <div>
+          <h2 class="text-3xl font-extrabold text-green-900 tracking-tight" id="stats-quiz-title">Quiz Stats</h2>
+          <div class="flex items-center gap-2 mt-1">
+            <span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-lg" id="stats-quiz-badge">Status</span>
+            <span class="text-xs text-green-600 font-medium">Join Code: <strong class="text-slido-400 text-sm tracking-wider font-mono font-bold" id="stats-quiz-code">JOIN</strong></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats Summary cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        
+        <div class="glass-card rounded-2xl p-6 flex items-center gap-4">
+          <div class="h-12 w-12 bg-slido-500/10 text-slido-400 rounded-xl flex items-center justify-center border border-slido-500/20 text-xl">
+            <i class="fa-solid fa-users"></i>
+          </div>
+          <div>
+            <span class="text-xs text-green-600 block font-semibold uppercase tracking-wider">Total Submissions</span>
+            <span class="text-2xl font-extrabold text-green-900 mt-0.5" id="stats-total-subs">0</span>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-2xl p-6 flex items-center gap-4">
+          <div class="h-12 w-12 bg-emerald-500/10 text-green-600 rounded-xl flex items-center justify-center border border-green-200/20 text-xl">
+            <i class="fa-solid fa-square-poll-horizontal"></i>
+          </div>
+          <div>
+            <span class="text-xs text-green-600 block font-semibold uppercase tracking-wider">Average Score</span>
+            <span class="text-2xl font-extrabold text-green-900 mt-0.5" id="stats-avg-score">0 / 0</span>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-2xl p-6 flex items-center gap-4 sm:col-span-2 lg:col-span-1">
+          <div class="h-12 w-12 bg-indigo-500/10 text-indigo-400 rounded-xl flex items-center justify-center border border-indigo-500/20 text-xl">
+            <i class="fa-solid fa-list-check"></i>
+          </div>
+          <div>
+            <span class="text-xs text-green-600 block font-semibold uppercase tracking-wider">Total Questions</span>
+            <span class="text-2xl font-extrabold text-green-900 mt-0.5" id="stats-total-qs">0</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Detail Tabs: Analytics vs Submissions -->
+      <div class="flex border-b border-green-200">
+        <button id="stats-tab-analytics" onclick="toggleStatsTab('analytics')" class="flex-grow pb-3 text-sm font-semibold border-b-2 border-slido-500 text-slido-200 transition">
+          <i class="fa-solid fa-chart-simple mr-2"></i>Question Analysis
+        </button>
+        <button id="stats-tab-leaderboard" onclick="toggleStatsTab('leaderboard')" class="flex-grow pb-3 text-sm font-semibold border-b-2 border-transparent text-green-600 hover:text-green-900 transition">
+          <i class="fa-solid fa-trophy mr-2 text-yellow-500"></i>Submissions & Leaderboard
+        </button>
+      </div>
+
+      <!-- Tab Content: Analytics -->
+      <div id="stats-panel-analytics" class="space-y-4">
+        <!-- Dynamic Question stats -->
+      </div>
+
+      <!-- Tab Content: Leaderboard -->
+      <div id="stats-panel-leaderboard" class="hidden space-y-3">
+        <!-- Dynamic Submissions list -->
+      </div>
+
+    </div>
+
+    <!-- ================== HOST PRESENTER VIEW ================== -->
+    <div id="host-view" class="hidden w-full flex flex-col pt-4">
+      <!-- Top Header Row -->
+      <div class="flex flex-wrap items-center justify-between mb-8 gap-4 px-2">
+        <div class="flex items-center gap-4">
+          <h2 id="host-quiz-title" class="text-3xl font-bold text-green-900 tracking-tight">Quiz Title</h2>
+        </div>
+        <button onclick="closeHostView()" class="px-4 py-2 bg-green-50 hover:bg-green-100 text-green-900 rounded-xl transition font-semibold text-sm border border-green-200">
+          End Presentation
+        </button>
+      </div>
+
+      <!-- Main Content (Centered QR Code and Join Code) -->
+      <div class="flex flex-col items-center justify-center py-10">
+        
+        <div class="mb-10 text-center">
+          <div class="text-sm text-green-600 font-bold tracking-widest uppercase mb-2">JOIN AT LOCALHOST:3000/JOIN</div>
+          <div id="host-join-code" class="text-6xl md:text-8xl font-extrabold text-brandGreen font-mono leading-none tracking-tight">#CODE</div>
+        </div>
+
+        <div class="bg-white/70 rounded-[2.5rem] p-10 flex flex-col items-center justify-center shadow-2xl border-4 border-green-200/20 w-full max-w-sm">
+          <div id="host-qrcode" class="mb-8 bg-white/70"></div>
+          <h4 class="text-3xl font-extrabold text-slate-900 mb-2 text-center tracking-tight">Scan to join</h4>
+          <p class="text-green-600 text-sm text-center font-medium leading-relaxed mt-2">
+            You can use the join code displayed above or simply scan this QR code with your camera to participate!
+          </p>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="w-full py-4 text-center border-t border-green-200 text-xs text-slate-600 glass-card mt-12">
+    <p>&copy; 2026 Quiz App Platform. All rights reserved. Created for educational purposes.</p>
+  </footer>
+
+  <!-- Frontend Logic -->
+  <script>
+    // State management
+    let token = localStorage.getItem('token') || '';
+    let activeAuthTab = 'login';
+    let questionCounter = 0;
+    let selectedQuizForStats = null;
+    let activeStatsTab = 'analytics';
+
+    const API_BASE = '/api';
+
+    // Headers config for secure routes
+    function getAuthHeaders() {
+      return {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      };
+    }
+
+    // App Startup logic
+    document.addEventListener('DOMContentLoaded', () => {
+      if (token) {
+        loadDashboard();
+      } else {
+        showView('auth-view');
+      }
+    });
+
+    // View switching helper
+    function showView(viewId) {
+      const views = ['auth-view', 'dashboard-view', 'creator-view', 'stats-view', 'host-view'];
+      views.forEach(id => {
+        const el = document.getElementById(id);
+        if (id === viewId) {
+          el.classList.remove('hidden');
+        } else {
+          el.classList.add('hidden');
+        }
+      });
+
+      // Update header visibility based on view
+      const userInfoHeader = document.getElementById('header-user-info');
+      if (viewId === 'auth-view') {
+        userInfoHeader.classList.add('hidden');
+      } else {
+        userInfoHeader.classList.remove('hidden');
+      }
+    }
+
+    // ================== AUTH LOGIC ==================
+
+    function toggleAuthTab(tab) {
+      activeAuthTab = tab;
+      const tabLogin = document.getElementById('auth-tab-login');
+      const tabRegister = document.getElementById('auth-tab-register');
+      const formLogin = document.getElementById('login-form');
+      const formRegister = document.getElementById('register-form');
+      const errDiv = document.getElementById('auth-error');
+
+      errDiv.classList.add('hidden');
+
+      if (tab === 'login') {
+        tabLogin.className = "flex-grow pb-3 text-base font-bold border-b-2 border-slido-500 text-slido-200 transition";
+        tabRegister.className = "flex-grow pb-3 text-base font-bold border-b-2 border-transparent text-green-600 hover:text-green-900 transition";
+        formLogin.classList.remove('hidden');
+        formRegister.classList.add('hidden');
+      } else {
+        tabRegister.className = "flex-grow pb-3 text-base font-bold border-b-2 border-slido-500 text-slido-200 transition";
+        tabLogin.className = "flex-grow pb-3 text-base font-bold border-b-2 border-transparent text-green-600 hover:text-green-900 transition";
+        formRegister.classList.remove('hidden');
+        formLogin.classList.add('hidden');
+      }
+    }
+
+    async function handleLoginSubmit(e) {
+      e.preventDefault();
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+
+      const errDiv = document.getElementById('auth-error');
+      errDiv.classList.add('hidden');
+
+      try {
+        const res = await fetch(`${API_BASE}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.message || 'Login failed');
+        }
+
+        token = data.token;
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+
+        loadDashboard();
+      } catch (err) {
+        document.getElementById('auth-error-msg').innerText = err.message;
+        errDiv.classList.remove('hidden');
+      }
+    }
+
+    async function handleRegisterSubmit(e) {
+      e.preventDefault();
+      const username = document.getElementById('register-username').value;
+      const email = document.getElementById('register-email').value;
+      const organizationName = document.getElementById('register-org').value;
+      const password = document.getElementById('register-password').value;
+
+      const errDiv = document.getElementById('auth-error');
+      errDiv.classList.add('hidden');
+
+      try {
+        const res = await fetch(`${API_BASE}/auth/signup`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, email, organizationName, password })
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.message || 'Registration failed');
+        }
+
+        token = data.token;
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+
+        loadDashboard();
+      } catch (err) {
+        document.getElementById('auth-error-msg').innerText = err.message;
+        errDiv.classList.remove('hidden');
+      }
+    }
+
+    function handleLogout() {
+      token = '';
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      showView('auth-view');
+    }
+
+    // ================== DASHBOARD LOGIC ==================
+
+    async function loadDashboard() {
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        document.getElementById('header-username').innerText = user.username;
+        document.getElementById('header-org').innerText = user.organizationName;
+      }
+
+      showView('dashboard-view');
+      await fetchQuizzes();
+    }
+
+    async function fetchQuizzes() {
+      try {
+        const res = await fetch(`${API_BASE}/quizzes`, {
+          headers: getAuthHeaders()
+        });
+
+        if (res.status === 401) {
+          handleLogout();
+          return;
+        }
+
+        const quizzes = await res.json();
+        renderQuizzesList(quizzes);
+      } catch (err) {
+        console.error('Error fetching quizzes:', err);
+      }
+    }
+
+    function renderQuizzesList(quizzes) {
+      const activeList = document.getElementById('active-quizzes-list');
+      const pastList = document.getElementById('past-quizzes-list');
+      
+      const activeQuizzes = quizzes.filter(q => q.status === 'active');
+      const pastQuizzes = quizzes.filter(q => q.status === 'past');
+
+      document.getElementById('active-count').innerText = activeQuizzes.length;
+      document.getElementById('past-count').innerText = pastQuizzes.length;
+
+      // Render Active
+      if (activeQuizzes.length === 0) {
+        activeList.innerHTML = `
+          <div class="text-center py-12 glass-card rounded-2xl text-green-600 text-sm">
+            <i class="fa-solid fa-gamepad text-2xl mb-2 text-slate-650"></i>
+            <p>No active quizzes right now.</p>
+          </div>`;
+      } else {
+        activeList.innerHTML = '';
+        activeQuizzes.forEach(quiz => {
+          activeList.appendChild(createQuizCard(quiz, true));
+        });
+      }
+
+      // Render Past
+      if (pastQuizzes.length === 0) {
+        pastList.innerHTML = `
+          <div class="text-center py-12 glass-card rounded-2xl text-green-600 text-sm">
+            <i class="fa-solid fa-box-archive text-2xl mb-2 text-slate-650"></i>
+            <p>No archived quizzes.</p>
+          </div>`;
+      } else {
+        pastList.innerHTML = '';
+        pastQuizzes.forEach(quiz => {
+          pastList.appendChild(createQuizCard(quiz, false));
+        });
+      }
+    }
+
+    function createQuizCard(quiz, isActive) {
+      const card = document.createElement('div');
+      card.className = "p-5 glass-card rounded-2xl shadow-md border border-green-200/80 hover:border-green-200/80 transition duration-300 space-y-4";
+      
+      const dateStr = new Date(quiz.createdAt).toLocaleDateString('en-US', {
+        month: 'short', day: 'numeric', year: 'numeric'
+      });
+
+      const copyHandler = `copyCode('${quiz.joinCode}')`;
+
+      card.innerHTML = `
+        <div class="flex justify-between items-start gap-4">
+          <div class="space-y-1">
+            <h4 class="text-lg font-bold text-green-900 leading-snug">${quiz.title}</h4>
+            <div class="flex items-center gap-2 text-xs text-green-600">
+              <span>Created ${dateStr}</span>
+              <span>&bull;</span>
+              <span>${quiz.questions.length} Questions</span>
+            </div>
+          </div>
+          <button 
+            onclick="${copyHandler}"
+            class="px-3 py-1.5 bg-white/70 border border-green-200 hover:border-emerald-400 rounded-xl text-xs font-mono font-bold text-slido-400 hover:text-slido-300 transition flex items-center gap-1.5"
+            title="Copy join link"
+          >
+            <span>#${quiz.joinCode}</span>
+            <i class="fa-solid fa-copy text-[10px]"></i>
+          </button>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-850">
+          <!-- Stats Trigger -->
+          <button 
+            onclick="viewQuizStats('${quiz._id}')"
+            class="px-4 py-2 bg-slido-500/10 hover:bg-slido-500/20 text-slido-400 border border-slido-500/30 rounded-xl transition text-xs font-semibold flex items-center gap-1.5"
+          >
+            <i class="fa-solid fa-chart-line"></i>
+            <span>Analytics</span>
+          </button>
+
+          <!-- Toggle Status / Archive -->
+          <div class="flex gap-2 ml-auto">
+            <button 
+              onclick="toggleQuizStatus('${quiz._id}', '${isActive ? 'past' : 'active'}')"
+              class="px-3 py-2 bg-green-50 hover:bg-slate-750 text-green-700 hover:text-green-900 rounded-xl transition text-xs font-semibold flex items-center gap-1"
+              title="${isActive ? 'Archive quiz' : 'Reactivate quiz'}"
+            >
+              <i class="fa-solid ${isActive ? 'fa-box-archive' : 'fa-circle-play'}"></i>
+              <span>${isActive ? 'Archive' : 'Activate'}</span>
+            </button>
+
+            <!-- Delete -->
+            <button 
+              onclick="deleteQuiz('${quiz._id}')"
+              class="p-2 bg-red-950/20 hover:bg-red-950/40 text-brandRed hover:text-red-400 border border-red-900/30 hover:border-red-950 rounded-xl transition text-xs flex items-center justify-center"
+              title="Delete Quiz"
+            >
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
+        </div>
+      `;
+      return card;
+    }
+
+    // Copy join link helper
+    function copyCode(code) {
+      const joinUrl = `${window.location.origin}/?code=${code}`;
+      navigator.clipboard.writeText(joinUrl).then(() => {
+        alert(`Join Link copied to clipboard!\n${joinUrl}`);
+      }).catch(err => {
+        // fallback to code
+        navigator.clipboard.writeText(code);
+        alert(`Join Code copied: #${code}`);
+      });
+    }
+
+    // Toggle quiz status (Active vs Past)
+    async function toggleQuizStatus(quizId, targetStatus) {
+      try {
+        const res = await fetch(`${API_BASE}/quizzes/${quizId}/status`, {
+          method: 'PATCH',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ status: targetStatus })
+        });
+        
+        if (res.ok) {
+          await fetchQuizzes();
+        } else {
+          const err = await res.json();
+          alert(err.message || 'Failed to update status');
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // Delete Quiz
+    async function deleteQuiz(quizId) {
+      if (!confirm("Are you sure you want to delete this quiz? All submissions and results will be permanently removed. This action cannot be undone.")) {
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/quizzes/${quizId}`, {
+          method: 'DELETE',
+          headers: getAuthHeaders()
+        });
+
+        if (res.ok) {
+          await fetchQuizzes();
+        } else {
+          const err = await res.json();
+          alert(err.message || 'Failed to delete quiz');
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+
+    // ================== QUIZ CREATOR FORM LOGIC ==================
+
+    function openQuizCreator() {
+      questionCounter = 0;
+      document.getElementById('questions-container').innerHTML = '';
+      document.getElementById('quiz-title').value = '';
+      
+      // Default to having at least 1 question
+      addQuestionField();
+      
+      showView('creator-view');
+    }
+
+    function closeQuizCreator() {
+      showView('dashboard-view');
+    }
+
+    function addQuestionField() {
+      const container = document.getElementById('questions-container');
+      const questionId = questionCounter++;
+
+      const block = document.createElement('div');
+      block.id = `q-block-${questionId}`;
+      block.className = "p-5 bg-white/90 border border-green-200 rounded-2xl relative space-y-4 shadow-sm";
+
+      block.innerHTML = `
+        <!-- Remove button -->
+        <button 
+          type="button" 
+          onclick="removeQuestionField(${questionId})" 
+          class="absolute top-4 right-4 h-8 w-8 text-xs text-green-600 hover:text-red-400 bg-green-50 hover:bg-red-50 border border-green-200/50 rounded-lg flex items-center justify-center transition"
+          title="Remove question"
+        >
+          <i class="fa-solid fa-trash"></i>
+        </button>
+
+        <div class="flex items-center gap-2">
+          <span class="h-6 w-6 rounded-full bg-slido-500 text-white font-bold text-xs flex items-center justify-center q-number-badge">1</span>
+          <h4 class="text-sm font-bold text-green-900">Question Prompt</h4>
+        </div>
+
+        <div>
+          <input 
+            type="text" 
+            placeholder="e.g., What is the capital of France?" 
+            class="w-full px-4 py-2.5 bg-white border border-green-200 rounded-xl text-green-900 focus:outline-none focus:ring-1 focus:ring-slido-500 focus:border-transparent transition text-sm q-text-input"
+            required
+          >
+        </div>
+
+        <div class="space-y-2">
+          <label class="block text-green-600 text-xs font-semibold">Options (Select the correct radio button)</label>
+          
+          <div class="space-y-2" id="options-container-${questionId}">
+            ${[0, 1].map(optIndex => `
+              <div class="flex items-center gap-3 option-row">
+                <input 
+                  type="radio" 
+                  name="correct-opt-${questionId}" 
+                  value="${optIndex}" 
+                  class="h-4 w-4 text-slido-500 focus:ring-slido-500 focus:ring-offset-0 bg-white border-green-200 q-correct-radio"
+                  ${optIndex === 0 ? 'checked' : ''}
+                  required
+                >
+                <input 
+                  type="text" 
+                  placeholder="Option ${optIndex + 1}" 
+                  class="flex-grow px-4 py-2 bg-white border border-green-200 rounded-xl text-green-900 focus:outline-none focus:ring-1 focus:ring-slido-500 focus:border-transparent transition text-xs q-opt-input"
+                  required
+                >
+              </div>
+            `).join('')}
+          </div>
+          
+          <button 
+            type="button" 
+            onclick="addOptionField(${questionId})" 
+            id="add-opt-btn-${questionId}"
+            class="mt-2 text-xs text-slido-400 hover:text-slido-300 font-semibold flex items-center gap-1 transition"
+          >
+            <i class="fa-solid fa-plus"></i> Add Option
+          </button>
+        </div>
+      `;
+
+      container.appendChild(block);
+      renumberQuestions();
+    }
+
+    function addOptionField(questionId) {
+      const container = document.getElementById(`options-container-${questionId}`);
+      const btn = document.getElementById(`add-opt-btn-${questionId}`);
+      const currentOptionsCount = container.querySelectorAll('.option-row').length;
+      
+      if (currentOptionsCount >= 4) return;
+      
+      const optIndex = currentOptionsCount;
+      const row = document.createElement('div');
+      row.className = 'flex items-center gap-3 option-row';
+      row.innerHTML = `
+        <input 
+          type="radio" 
+          name="correct-opt-${questionId}" 
+          value="${optIndex}" 
+          class="h-4 w-4 text-slido-500 focus:ring-slido-500 focus:ring-offset-0 bg-white border-green-200 q-correct-radio"
+          required
+        >
+        <input 
+          type="text" 
+          placeholder="Option ${optIndex + 1}" 
+          class="flex-grow px-4 py-2 bg-white border border-green-200 rounded-xl text-green-900 focus:outline-none focus:ring-1 focus:ring-slido-500 focus:border-transparent transition text-xs q-opt-input"
+          required
+        >
+      `;
+      container.appendChild(row);
+      
+      // Hide button if we reached 4 options
+      if (currentOptionsCount + 1 >= 4) {
+        btn.style.display = 'none';
+      }
+    }
+
+    function removeQuestionField(id) {
+      const container = document.getElementById('questions-container');
+      if (container.children.length <= 1) {
+        alert("You must include at least 1 question in the quiz.");
+        return;
+      }
+      
+      const block = document.getElementById(`q-block-${id}`);
+      if (block) {
+        block.remove();
+        renumberQuestions();
+      }
+    }
+
+    function renumberQuestions() {
+      const badges = document.querySelectorAll('.q-number-badge');
+      badges.forEach((badge, idx) => {
+        badge.innerText = idx + 1;
+      });
+    }
+
+    async function handleCreateQuizSubmit(e) {
+      e.preventDefault();
+
+      const title = document.getElementById('quiz-title').value.trim();
+      const questionBlocks = document.getElementById('questions-container').children;
+
+      const questions = [];
+
+      // Extract details from DOM
+      for (let i = 0; i < questionBlocks.length; i++) {
+        const block = questionBlocks[i];
+        
+        // Find input prompt
+        const textInput = block.querySelector('.q-text-input');
+        const text = textInput.value.trim();
+
+        // Options
+        const optInputs = block.querySelectorAll('.q-opt-input');
+        const options = Array.from(optInputs).map(input => input.value.trim());
+
+        // Correct Option
+        const radioInputs = block.querySelectorAll('.q-correct-radio');
+        let correctOptionIndex = 0;
+        radioInputs.forEach(radio => {
+          if (radio.checked) {
+            correctOptionIndex = parseInt(radio.value);
+          }
+        });
+
+        questions.push({
+          text,
+          options,
+          correctOptionIndex
+        });
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/quizzes`, {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({
+            title,
+            questions
+          })
+        });
+
+        const data = await res.json();
+        
+        if (res.ok) {
+          await fetchQuizzes();
+          openHostView(data);
+        } else {
+          alert(data.message || 'Quiz creation failed');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Server error creating quiz');
+      }
+    }
+
+
+    
+    // ================== HOST PRESENTER VIEW LOGIC ==================
+
+    function openHostView(quizData) {
+      document.getElementById('host-quiz-title').innerText = quizData.title;
+      document.getElementById('host-join-code').innerText = '#' + quizData.joinCode;
+      
+      // Clear previous QR code
+      const qrContainer = document.getElementById('host-qrcode');
+      qrContainer.innerHTML = '';
+      
+      // Generate new QR code
+      const joinUrl = `${window.location.origin}/?code=${quizData.joinCode}`;
+      new QRCode(qrContainer, {
+        text: joinUrl,
+        width: 180,
+        height: 180,
+        colorDark : "#0f172a",
+        colorLight : "#ffffff",
+        correctLevel : QRCode.CorrectLevel.H
+      });
+
+      showView('host-view');
+    }
+
+    function closeHostView() {
+      showView('dashboard-view');
+    }
+
+    // ================== STATS / ANALYTICS VIEW LOGIC ==================
+
+    async function viewQuizStats(quizId) {
+      try {
+        const res = await fetch(`${API_BASE}/quizzes/${quizId}/stats`, {
+          headers: getAuthHeaders()
+        });
+
+        if (!res.ok) {
+          throw new Error('Could not fetch quiz analytics');
+        }
+
+        const data = await res.json();
+        selectedQuizForStats = data;
+
+        // Render Stats Header
+        document.getElementById('stats-quiz-title').innerText = data.quiz.title;
+        document.getElementById('stats-quiz-code').innerText = data.quiz.joinCode;
+
+        // Set status badge
+        const badge = document.getElementById('stats-quiz-badge');
+        if (data.quiz.status === 'active') {
+          badge.className = "px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-lg bg-green-100/40 text-green-600 border border-green-200";
+          badge.innerText = "Active";
+        } else {
+          badge.className = "px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-lg bg-emerald-800 text-green-600 border border-green-200/50";
+          badge.innerText = "Past";
+        }
+
+        // Summary values
+        document.getElementById('stats-total-subs').innerText = data.stats.totalSubmissions;
+        document.getElementById('stats-avg-score').innerText = `${data.stats.averageScore} / ${data.quiz.totalQuestions}`;
+        document.getElementById('stats-total-qs').innerText = data.quiz.totalQuestions;
+
+        // Populate Panels
+        renderStatsQuestionAnalysis(data);
+        renderStatsLeaderboard(data);
+
+        toggleStatsTab('analytics');
+        showView('stats-view');
+
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    function closeStatsView() {
+      showView('dashboard-view');
+    }
+
+    function toggleStatsTab(tab) {
+      activeStatsTab = tab;
+      const tabAnalytics = document.getElementById('stats-tab-analytics');
+      const tabLeaderboard = document.getElementById('stats-tab-leaderboard');
+      const panelAnalytics = document.getElementById('stats-panel-analytics');
+      const panelLeaderboard = document.getElementById('stats-panel-leaderboard');
+
+      if (tab === 'analytics') {
+        tabAnalytics.className = "flex-grow pb-3 text-sm font-semibold border-b-2 border-slido-500 text-slido-200 transition text-center cursor-pointer";
+        tabLeaderboard.className = "flex-grow pb-3 text-sm font-semibold border-b-2 border-transparent text-green-600 hover:text-green-900 transition text-center cursor-pointer";
+        panelAnalytics.classList.remove('hidden');
+        panelLeaderboard.classList.add('hidden');
+      } else {
+        tabLeaderboard.className = "flex-grow pb-3 text-sm font-semibold border-b-2 border-slido-500 text-slido-200 transition text-center cursor-pointer";
+        tabAnalytics.className = "flex-grow pb-3 text-sm font-semibold border-b-2 border-transparent text-green-600 hover:text-green-900 transition text-center cursor-pointer";
+        panelLeaderboard.classList.remove('hidden');
+        panelAnalytics.classList.add('hidden');
+      }
+    }
+
+    function renderStatsQuestionAnalysis(data) {
+      const container = document.getElementById('stats-panel-analytics');
+      
+      if (data.stats.totalSubmissions === 0) {
+        container.innerHTML = `<div class="text-center py-12 glass-card rounded-2xl text-green-600 text-sm">No submissions recorded yet for this quiz. Analytics will appear once someone plays.</div>`;
+        return;
+      }
+
+      container.innerHTML = '';
+      data.stats.questionStats.forEach((qStat, idx) => {
+        const correctPct = qStat.totalCount > 0 ? Math.round((qStat.correctCount / qStat.totalCount) * 100) : 0;
+        
+        const card = document.createElement('div');
+        card.className = "p-5 glass-card rounded-2xl border border-green-200 space-y-3";
+
+        let progressBarBg = 'bg-brandRed';
+        let badgeColor = 'text-brandRed bg-red-950/20 border-red-900/30';
+        
+        if (correctPct >= 70) {
+          progressBarBg = 'bg-brandGreen';
+          badgeColor = 'text-brandGreen bg-green-100/20 border-green-200';
+        } else if (correctPct >= 40) {
+          progressBarBg = 'bg-yellow-500';
+          badgeColor = 'text-yellow-500 bg-yellow-950/20 border-yellow-900/30';
+        }
+
+        card.innerHTML = `
+          <div class="flex justify-between items-start gap-3">
+            <div>
+              <span class="text-xs text-green-600 font-semibold uppercase">Question ${idx + 1}</span>
+              <h4 class="text-sm font-semibold text-green-900 mt-0.5 leading-snug">${qStat.text}</h4>
+            </div>
+            <span class="px-2.5 py-1 text-xs font-bold font-mono rounded-lg border ${badgeColor}">
+              ${correctPct}% Correct
+            </span>
+          </div>
+
+          <div class="space-y-1">
+            <div class="w-full h-2.5 bg-white/70 rounded-full overflow-hidden">
+              <div class="h-full ${progressBarBg} transition-all" style="width: ${correctPct}%;"></div>
+            </div>
+            <div class="flex justify-between text-[10px] text-green-600 font-medium">
+              <span>Correct: ${qStat.correctCount} / ${qStat.totalCount} players</span>
+              <span>Incorrect: ${qStat.incorrectCount} / ${qStat.totalCount} players</span>
+            </div>
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+    }
+
+    function renderStatsLeaderboard(data) {
+      const container = document.getElementById('stats-panel-leaderboard');
+      
+      if (data.leaderboard.length === 0) {
+        container.innerHTML = `<div class="text-center py-12 glass-card rounded-2xl text-green-600 text-sm">No submissions recorded yet for this quiz.</div>`;
+        return;
+      }
+
+      container.innerHTML = '';
+      data.leaderboard.forEach((sub, idx) => {
+        const dateStr = new Date(sub.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' on ' + new Date(sub.createdAt).toLocaleDateString();
+
+        let badge = '';
+        let badgeStyle = 'bg-green-50/40 text-green-600 border border-green-200/30';
+        if (idx === 0) {
+          badge = '<i class="fa-solid fa-trophy text-yellow-400"></i>';
+          badgeStyle = 'bg-yellow-400/10 text-yellow-400 border border-yellow-400/20';
+        } else if (idx === 1) {
+          badge = '<i class="fa-solid fa-trophy text-green-700"></i>';
+          badgeStyle = 'bg-slate-300/10 text-green-700 border border-slate-300/20';
+        } else if (idx === 2) {
+          badge = '<i class="fa-solid fa-trophy text-amber-600"></i>';
+          badgeStyle = 'bg-amber-600/10 text-amber-600 border border-amber-600/20';
+        } else {
+          badge = `<span class="text-xs font-bold font-mono">#${idx + 1}</span>`;
+        }
+
+        const scorePct = Math.round((sub.score / sub.totalQuestions) * 100);
+
+        const card = document.createElement('div');
+        card.className = "p-4 glass-card rounded-xl border border-slate-850 flex items-center justify-between gap-4";
+
+        card.innerHTML = `
+          <div class="flex items-center gap-3">
+            <div class="h-8 w-8 rounded-lg flex items-center justify-center ${badgeStyle}">
+              ${badge}
+            </div>
+            <div>
+              <h5 class="text-sm font-bold text-green-900 leading-none">${sub.participantName}</h5>
+              <span class="text-[10px] text-green-600 font-medium">${dateStr}</span>
+            </div>
+          </div>
+
+          <div class="text-right">
+            <div class="text-sm font-extrabold text-green-900">${sub.score} / ${sub.totalQuestions}</div>
+            <div class="text-[10px] text-green-600 font-semibold">${scorePct}% accuracy</div>
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+    }
+
+  </script>
+</body>
+</html>
